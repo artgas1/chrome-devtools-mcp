@@ -100,7 +100,11 @@ describe('pwa', () => {
         );
 
         response.resetResponseLineForTesting();
-        await getOsAppState().handler({params: {manifestId}}, response, context);
+        await getOsAppState().handler(
+          {params: {manifestId}},
+          response,
+          context,
+        );
         const stateOutput = response.responseLines.join('\n');
         assert.ok(
           stateOutput.includes('Badge count: 0'),
@@ -149,7 +153,11 @@ describe('pwa', () => {
           context,
         );
         await launchPwa().handler({params: {manifestId}}, response, context);
-        await getOsAppState().handler({params: {manifestId}}, response, context);
+        await getOsAppState().handler(
+          {params: {manifestId}},
+          response,
+          context,
+        );
         await uninstallPwa().handler({params: {manifestId}}, response, context);
 
         assert.ok(install.calledOnce);

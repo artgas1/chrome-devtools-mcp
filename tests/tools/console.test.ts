@@ -661,7 +661,7 @@ describe('console', () => {
           const page = context.getSelectedMcpPage();
           await page.pptrPage.goto(server.getRoute('/index.html'));
 
-          await getConsoleMessage.handler(
+          await getConsoleMessage().handler(
             {params: {msgid: 1}, page: context.getSelectedMcpPage()},
             response,
             context,

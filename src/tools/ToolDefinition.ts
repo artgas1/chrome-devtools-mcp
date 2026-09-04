@@ -387,7 +387,6 @@ export type ContextPage = Readonly<{
   openDevTools(): Promise<Page | undefined>;
 }>;
 
-
 const DEFAULT_TOOL_ARGV: string[] = [];
 let defaultToolArgs: ParsedArguments | undefined;
 

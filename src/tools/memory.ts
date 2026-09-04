@@ -2,7 +2,7 @@
  * @license
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 
 import {zod} from '../third_party/index.js';
 import {byteSizeRangeSchema} from '../utils/bytes.js';
