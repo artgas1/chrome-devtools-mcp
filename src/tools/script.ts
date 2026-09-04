@@ -11,14 +11,24 @@ import type {ExtensionServiceWorker} from '../types.js';
 import type {ParsedArguments} from '../config/mcp-options.js';
 import {ToolCategory} from './categories.js';
 import type {Context, Response} from './ToolDefinition.js';
-import {defineTool, pageIdSchema, resolveToolArgs} from './ToolDefinition.js';
+import {defineTool, pageIdSchema} from './ToolDefinition.js';
 
 export type Evaluatable = Page | Frame | WebWorker;
 
 export const evaluateScript = defineTool((cliArgs: ParsedArguments) => {
-  const toolArgs = resolveToolArgs(cliArgs);
+  let pageIdProp: zod.ZodNumber | zod.ZodOptional<zod.ZodNumber> =
+    pageIdSchema.pageId;
+  if (cliArgs.pageIdRouting && cliArgs.categoryExtensions) {
+    pageIdProp = zod
+      .number()
+      .optional()
+      .describe(
+        'Targets a specific page by ID. Required when not evaluating in a service worker.',
+      );
+  }
+
   const schema = {
-    pageId: pageIdSchema.pageId.optional(),
+    pageId: pageIdProp,
     function: zod.string().describe(
       `A JavaScript function declaration to be executed by the tool in the target page.
 Example without arguments: \`() => document.title\` or \`async () => await fetch("example.com")\`.
@@ -61,24 +71,17 @@ Example with arguments: \`(el) => el.innerText\`
       ),
   };
 
-  if (!toolArgs.pageIdRouting) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (schema as any).pageId;
-  } else if (toolArgs.pageIdRouting && cliArgs.categoryExtensions) {
-    schema.pageId = zod
-      .number()
-      .optional()
-      .describe(
-        'Targets a specific page by ID. Required when not evaluating in a service worker.',
-      );
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (schema as any).pageId;
+  if (!cliArgs.pageIdRouting) {
+    Reflect.deleteProperty(schema, 'pageId');
+  }
+
+  if (!cliArgs.categoryExtensions) {
+    Reflect.deleteProperty(schema, 'serviceWorkerId');
   }
 
   return {
     name: 'evaluate_script',
-    description: `Evaluate a JavaScript function inside the target page${toolArgs.categoryExtensions ? ' or service worker' : ''}. Returns the response as JSON, so returned values have to be JSON-serializable.`,
+    description: `Evaluate a JavaScript function inside the target page${cliArgs.categoryExtensions ? ' or service worker' : ''}. Returns the response as JSON, so returned values have to be JSON-serializable.`,
     annotations: {
       category: ToolCategory.DEBUGGING,
       readOnlyHint: false,
@@ -100,7 +103,7 @@ Example with arguments: \`(el) => el.innerText\`
         waitForStableDom,
       } = request.params;
 
-      if (toolArgs.categoryExtensions && serviceWorkerId) {
+      if (cliArgs.categoryExtensions && serviceWorkerId) {
         if (uidArgs && uidArgs.length > 0) {
           throw new Error(
             'args (element uids) cannot be used when evaluating in a service worker.',
@@ -130,12 +133,12 @@ Example with arguments: \`(el) => el.innerText\`
         return;
       }
 
-      if (toolArgs.categoryExtensions && toolArgs.pageIdRouting && !pageId) {
+      if (cliArgs.categoryExtensions && cliArgs.pageIdRouting && !pageId) {
         throw new Error('specify either a pageId or a serviceWorkerId.');
       }
 
       const mcpPage =
-        toolArgs.pageIdRouting && request.params.pageId
+        cliArgs.pageIdRouting && request.params.pageId
           ? context.getPageById(request.params.pageId)
           : context.getSelectedMcpPage();
       const page: Page = mcpPage.pptrPage;
