@@ -334,7 +334,7 @@ describe('McpContext', () => {
       };
       const first = await McpContext.from(browser, undefined, options, Locator);
       const idBeforeReconnect = (await first.newPage()).id;
-      first.dispose();
+      await first.dispose();
 
       // A new context (as created after a browser reconnect) continues the
       // shared id counter, so an id handed out before no longer resolves and
@@ -355,7 +355,7 @@ describe('McpContext', () => {
           'ids continue past the pre-reconnect ids',
         );
       } finally {
-        second.dispose();
+        await second.dispose();
       }
     });
   });
@@ -376,7 +376,7 @@ describe('McpContext', () => {
         assert.ok(context.consumeReconnectNotice(), 'notice available once');
         assert.ok(!context.consumeReconnectNotice(), 'notice does not repeat');
       } finally {
-        context.dispose();
+        await context.dispose();
       }
     });
   });
@@ -390,7 +390,7 @@ describe('McpContext', () => {
       await context.getHeapSnapshotStats(filePath);
       assert.ok(context.hasHeapSnapshots(), 'snapshot loaded before teardown');
 
-      context.dispose();
+      await context.dispose();
 
       assert.ok(
         !context.hasHeapSnapshots(),

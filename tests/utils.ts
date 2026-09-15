@@ -176,7 +176,7 @@ export async function withMcpContext(
     McpContext.resetPageIdsForTesting();
     const response = new McpResponse(args as ParsedArguments);
     if (context) {
-      context.dispose();
+      await context.dispose();
     }
     context = await McpContext.from(
       browser,
